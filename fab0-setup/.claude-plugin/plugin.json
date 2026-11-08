@@ -1,0 +1,11 @@
+{
+  "name": "fab0-setup",
+  "version": "1.0.0",
+  "description": "Helps you set up fab0: writes and checks your pipelines, from your words or a tested recipe, and prepares your GitHub for them.",
+  "author": { "name": "fab0" },
+  "homepage": "https://fab0.dev",
+  "repository": "https://github.com/fabtend/claude-plugin",
+  "license": "MIT",
+  "keywords": ["fab0", "pipelines", "setup"],
+  "dependencies": ["fab0"]
+}
