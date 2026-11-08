@@ -1,0 +1,35 @@
+version: 2
+name: fan-out
+description: A plan cut into parts, each run as a child, then accepted by a person.
+people: { owners: [your-login] }
+executors:
+  planner: { type: manual, by: [your-login] }
+start: [{ on: api }]
+limits: { children: 10, depth: 1 }
+states:
+  plan:
+    run: planner
+    children: { pipeline: fan-out-part }
+    timeout: 7d
+    on: { children.done: accept, failed: abandoned, timeout: abandoned }
+  accept:
+    timeout: 7d
+    on:
+      approve: { to: done, by: [owners] }
+      redo: { to: plan, by: [owners] }
+      reject: { to: abandoned, by: [owners] }
+      timeout: abandoned
+  done: { end: succeeded }
+  abandoned: { end: failed }
+---
+version: 2
+name: fan-out-part
+description: One part of a fan-out, done by a person.
+executors:
+  worker: { type: manual, by: [your-login] }
+states:
+  work:
+    run: worker
+    on: { done: done, failed: failed }
+  done: { end: succeeded }
+  failed: { end: failed }

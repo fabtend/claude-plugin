@@ -1,0 +1,32 @@
+version: 2
+name: github-issue
+description: An issue labelled Ready is worked into a pull request, reviewed on GitHub, and merged.
+people: { reviewers: [reviewer-login] }
+executors:
+  worker: { type: manual, by: [your-login] }
+start:
+  - on: github.issues.labeled
+    where: { label: Ready }
+  - on: api
+limits: { visits: 5 }
+states:
+  work:
+    run: worker
+    outputs: { type: object, required: [pr], properties: { pr: { type: string } } }
+    on: { done: review, failed: abandoned }
+  review:
+    timeout: 7d
+    on:
+      github.pull_request_review.submitted:
+        - { where: { state: approved }, by: [reviewers], to: merge }
+        - { where: { state: changes_requested }, by: [reviewers], to: work }
+      timeout: abandoned
+  merge:
+    timeout: 7d
+    on:
+      github.pull_request.closed:
+        - { where: { merged: true }, to: done }
+        - { to: abandoned }
+      timeout: abandoned
+  done: { end: succeeded }
+  abandoned: { end: failed }

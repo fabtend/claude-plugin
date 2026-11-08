@@ -1,6 +1,18 @@
 {
   "name": "fab0",
   "description": "The fab0 plugin for Claude Code: your pipelines' runs, queue, steps and signals.",
-  "owner": { "name": "fab0" },
-  "plugins": [{ "name": "fab0", "source": "./" }]
+  "owner": {
+    "name": "fab0"
+  },
+  "plugins": [
+    {
+      "name": "fab0",
+      "source": "./"
+    },
+    {
+      "name": "fab0-setup",
+      "source": "./fab0-setup",
+      "description": "Helps you set up fab0: writes and checks your pipelines, from your words or a tested recipe, and prepares your GitHub for them."
+    }
+  ]
 }

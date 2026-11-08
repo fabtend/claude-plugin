@@ -1,0 +1,23 @@
+version: 2
+name: review-loop
+description: One step, reviewed by a person, redone on changes.
+people: { reviewers: [your-login] }
+executors:
+  worker: { type: manual, by: [your-login] }
+start: [{ on: api }]
+limits: { visits: 5 }
+states:
+  work:
+    run: worker
+    retries: 1
+    outputs: { type: object, required: [summary], properties: { summary: { type: string } } }
+    on: { done: review, failed: abandoned }
+  review:
+    timeout: 7d
+    on:
+      approve: { to: done, by: [reviewers] }
+      changes: { to: work, by: [reviewers] }
+      reject: { to: abandoned, by: [reviewers] }
+      timeout: abandoned
+  done: { end: succeeded }
+  abandoned: { end: failed }
