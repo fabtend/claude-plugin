@@ -1,7 +1,7 @@
 {
   "name": "fab0",
-  "version": "1.0.0",
-  "description": "Runs your fab0 pipelines from Claude Code: see runs and your queue, work steps, send signals, and write pipelines.",
+  "version": "2.0.0",
+  "description": "Connects Claude Code to fab0: your runs, your queue, the steps you work and the signals you send.",
   "author": { "name": "fab0" },
   "homepage": "https://fab0.dev",
   "repository": "https://github.com/fabtend/claude-plugin",

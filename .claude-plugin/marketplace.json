@@ -6,13 +6,14 @@
   },
   "plugins": [
     {
-      "name": "fab0",
-      "source": "./"
-    },
-    {
       "name": "fab0-setup",
       "source": "./fab0-setup",
       "description": "Helps you set up fab0: writes and checks your pipelines, from your words or a tested recipe, and prepares your GitHub for them."
+    },
+    {
+      "name": "fab0",
+      "source": "./fab0",
+      "description": "Connects Claude Code to fab0: your runs, your queue, the steps you work and the signals you send."
     }
   ]
 }
