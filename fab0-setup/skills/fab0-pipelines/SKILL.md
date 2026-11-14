@@ -1,16 +1,16 @@
 ---
 name: fab0-pipelines
-description: Writes and changes fab0 pipelines, one at a time, from a person's description, a recipe this plugin ships or a pipeline fab0 already holds. Validates each draft with the fab0 MCP tools until no error is left, puts it, reports each warning with what to do (a secret to set, with the command the person runs before the put), and commits .fab0/pipelines.yml through a pull request when the person keeps it in a repository. Use when the person asks to write, change, fix or explain a fab0 pipeline or a pipelines file, describes how work should move between people, agents and their GitHub issues and pull requests (steps, reviews, approvals, loops, children), names a fab0 recipe, or asks why a pipeline is invalid or what a validation warning means.
+description: Writes and changes fab0 pipelines, one at a time, from a person's description, a recipe this plugin ships or a pipeline fab0 already holds. Validates each draft with the fab0 MCP tools until no error is left, puts it, reports each warning with what to do (a secret to set, with the command the person runs before the put), and, when the person keeps their pipelines in a repository, commits the pipeline's file (.fab0/pipelines/<name>.yml) through a pull request and, once it is merged, puts every pipelines file itself. Use when the person asks to write, change, fix or explain a fab0 pipeline or a pipelines file, describes how work should move between people, agents and their GitHub issues and pull requests (steps, reviews, approvals, loops, children), names a fab0 recipe, or asks why a pipeline is invalid or what a validation warning means.
 license: MIT
 compatibility: Needs the fab0 MCP server, from the fab0 plugin, which fab0-setup installs. Committing the file needs git and the GitHub CLI (gh) signed in as the person; setting a secret needs curl in the person's own shell.
 metadata:
-  version: "4"
-  plugin: "1.0.0"
+  version: "5"
+  plugin: "2.0.0"
 ---
 
 # Write a fab0 pipeline
 
-fab0 holds a team's pipelines and their runs. A pipeline is a state machine written as one YAML document: its states fire steps at executors the team owns (a Claude Code routine, their own service, or a person's queue) and wait for signals from people, agents and GitHub. This skill writes or changes one pipeline with the person, validates it with fab0 until it has no error, and puts it. When the person keeps their pipelines in a repository, it also commits the file through a pull request.
+fab0 holds a team's pipelines and their runs. A pipeline is a state machine written as one YAML document: its states fire steps at executors the team owns (a Claude Code routine, their own service, or a person's queue) and wait for signals from people, agents and GitHub. This skill writes or changes one pipeline with the person, validates it with fab0 until it has no error, and puts it. When the person keeps their pipelines in a repository, it also commits the file through a pull request, and puts the repository's pipelines files once it is merged.
 
 [reference.md](reference.md) is the format: the file, every key, executor, state key and signal, the GitHub signals and their fields, the limits, and every validation code with its fix, ending with whole pipelines that validate. Read it before you write.
 
@@ -30,13 +30,13 @@ Start from one of:
 
 - **The person's description**, or their raw ideas.
 - **A recipe**, a tested pipeline this plugin ships. List them with `ls ${CLAUDE_PLUGIN_ROOT}/recipes/`, and read one from there. A recipe names the people, repositories and skills it was tested with (`your-login`, `reviewer-login`): replace each with the person's own, and name only skills their repository holds or will hold. Change as little else as you can.
-- **A pipeline fab0 holds**, to change. fab0 keeps its text where it came from: the repository's `.fab0/pipelines.yml`, or the file the person put. Read that text. Call `validate_pipeline` with `tenant` and `name` for the report fab0 stored for its active version: its `version`, and the errors and warnings it was put with. Then call `validate_pipeline` with the text (as in 3): when its document's `version` equals the stored one, the text is what runs. If they differ, or the person has no text, tell them, and write the pipeline again from the description.
+- **A pipeline fab0 holds**, to change. fab0 keeps its text where it came from: a file of the repository (6), or the file the person put. Read that text. Call `validate_pipeline` with `tenant` and `name` for the report fab0 stored for its active version: its `version`, and the errors and warnings it was put with. Then call `validate_pipeline` with the text (as in 3): when its document's `version` equals the stored one, the text is what runs. If they differ, or the person has no text, tell them, and write the pipeline again from the description.
 
 A step's `with` is the pipeline's message to whoever works it. When a step should follow one of the repository's skills, name it, as `with: { skill: <name> }`, from the folders of `.claude/skills/` in the person's checkout, or in another repository with `gh api repos/<owner>/<repo>/contents/.claude/skills --jq '.[].name'`. A step needs no `with`.
 
 Ask only what the start doesn't answer and reference.md can't default:
 
-- what starts a run: a person (`on: api`), or a GitHub event, with the label or issue type it needs;
+- what starts a run: a person (`on: api`), a GitHub event, with the label or issue type it needs, or a signed webhook from another service (`ext.*`). `github.*` signals reach fab0 only from repositories where the fab0 GitHub App is installed; without the App, a source's signed webhook (`ext.*`) is the way in;
 - each step: who or what works it (a routine, a service, or people's queue), and what its `with` tells them, if anything;
 - each decision: who makes it, as GitHub logins, and where it leads;
 - what ends a run, as success and as failure.
@@ -48,7 +48,7 @@ Tell the person which defaults you used for everything else.
 Write one document, from the start you chose and reference.md:
 
 - A new file begins with the modeline, `# yaml-language-server: $schema=https://schema.fab0.dev/pipeline.v2.json`, on its first line. Keep it in a file that has one, and add it to one that doesn't.
-- The document begins with `version: 2` and its `name`. A new document in an existing file goes at its end, after a line `---`; a changed one is edited in place.
+- The document begins with `version: 2` and its `name`. A new pipeline gets a file of its own, `.fab0/pipelines/<name>.yml`, holding only its document. A changed one is edited in place, in the file that holds it, which may be the legacy `.fab0/pipelines.yml` of several documents. In a repository, no other file may define the pipeline's name (6).
 - Every state with `run` handles `done` and `failed`. Every state that waits on people has a `timeout` and handles it, unless a person always answers.
 - Give every decision its `by`, and name groups of people under `people`.
 - A state that waits for a pull request's events needs a step before it that links the pull request (reference.md section 6).
@@ -80,7 +80,7 @@ Show the person the document, and say in a few lines what it does: what starts a
 
 Call `put_pipeline` with `text`, the whole file, and `tenant` when the person has several. Each valid document becomes its pipeline's active version; the answer gives each document's `status` and `version`. On `forbidden`, the person isn't an admin of the tenant: tell them an admin of a repository where fab0 is installed puts it, or merges it (6).
 
-When the person keeps the file in a repository and wants its review there before it runs, don't put it: go to 6, where the merge and `sync_pipelines` put it.
+When the person keeps the file in a repository and wants its review there before it runs, don't put it: go to 6, where you put the repository's files once the pull request is merged.
 
 ## 5. Report
 
@@ -88,21 +88,22 @@ Report each warning by its `path`, not by its `line`: a store warning's line is 
 
 - `unbounded-wait`: a state may wait for ever. Ask whether a person always answers, or every child always ends; if not, add a `timeout`, handle it, and validate and put again.
 - `unknown-pipeline`: the child pipeline isn't in the tenant yet. Write and put it too; until then, the step can't start that child.
+- `ext-unchecked`: the pipeline takes an `ext.` signal, whose fields fab0 can't check. Ask the person which fields the source's sender puts in its payload, and make each `where` name only those.
 - `secret-unset`: the executor at the path (`executors.<name>.secret`) has no secret set for its origin, so its steps fail with cause `refused` until the person sets it. Runs already started keep the version they began with; new runs use the one just put.
 
 ## 6. Commit
 
-When the person keeps their pipelines in a repository, the file is its `.fab0/pipelines.yml`, read from the default branch. Commit it through a pull request:
+When the person keeps their pipelines in a repository, they live in any number of files: one pipeline per file in `.fab0/pipelines/<name>.yml`, the convention for every new one, and the legacy `.fab0/pipelines.yml`, which may hold several. A repository may have both. What its default branch holds is what you put. Commit the file through a pull request:
 
-1. Create a branch (`git switch -c pipelines/<name>`), commit only `.fab0/pipelines.yml`, and push the branch.
+1. Create a branch (`git switch -c pipelines/<name>`), commit only the pipeline's file, and push the branch.
 2. Open the pull request with `gh api -X POST repos/<owner>/<repo>/pulls -f head=<branch> -f base=<default branch> -f title=<title> -f body=<body>`, not `gh pr create`. The default branch is `gh api repos/<owner>/<repo> --jq .default_branch`, and the body says what the pipeline does, as you described it in 4. Show the person its link.
-3. Once it is merged, call `sync_pipelines` with `repo` (`owner/name`), so fab0 reads the file now rather than at its next pass, within 15 minutes. It answers:
-   - `synced`: each valid document is active; report its warnings as in 5;
-   - `not-modified`: fab0 already had this file;
-   - `absent`: the default branch has no `.fab0/pipelines.yml`: check that the merge landed;
-   - `rejected`: the file was refused whole, and the active versions stay. Its `problems` say why: fix them on a new branch (3).
+3. Once it is merged, put the repository's pipelines yourself, as below. A pipeline put in 4 and the same text put again are one version: the put changes nothing.
 
-A pipeline put in 4 and the same text synced from the repository are one version: the sync changes nothing.
+**Put the repository's pipelines.** fab0 takes a repository's pipelines from you, through `put_pipeline`.
+
+1. Read every pipelines file from the default branch: list `.fab0/pipelines/` with `gh api repos/<owner>/<repo>/contents/.fab0/pipelines --jq '.[] | select(.type == "file") | .path'`, keep the paths that end in `.yml`, and read each one, and the legacy `.fab0/pipelines.yml`, with `gh api repos/<owner>/<repo>/contents/<path> -H 'Accept: application/vnd.github.raw'`. A `404` means the repository has no such folder or file. In a checkout of the default branch, up to date with the merge, you may read the same files from disk.
+2. Before any put, read each document's `name` in every file. When a name is defined in two files, put nothing: tell the person the name and both paths, and that one file must give it up, through a pull request (1). A name twice in one file is that file's `duplicate-name` error, which its put reports.
+3. Call `put_pipeline` once per file, with `text`, the whole file, and `tenant` when the person has several. Report each answer as in 5, by its file: each document's `status` and `version`, and its warnings. A file whose answer has `problems` was refused whole, and an invalid document is not put: either way, the active versions stay. Show the person why, and fix them on a new branch (3).
 
 ## 7. Prepare GitHub
 
@@ -112,7 +113,7 @@ When a `start` rule's `where` names a `label` or an `issue_type`, its runs start
 node ${CLAUDE_PLUGIN_ROOT}/scripts/fab0-setup.mjs <owner> <repository> --labels <labels> --types <types>
 ```
 
-- `<owner>` and `<repository>` are those of the repository that holds `.fab0/pipelines.yml`.
+- `<owner>` and `<repository>` are those of the repository that holds the pipelines files.
 - `<labels>` is the labels the `start` rules name, comma-separated, or `""` for none. `<types>` is the issue types they name, or `""`.
 - On a user account (`gh api users/<owner> --jq .type` answers `User`), pass `--types ""`: only organizations have issue types.
 

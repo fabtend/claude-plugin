@@ -1,10 +1,10 @@
 # fab0-setup
 
-[fab0](https://fab0.dev) keeps the runs of your team's pipelines. A pipeline is a state machine you write in your repository's `.fab0/pipelines.yml`. This plugin helps you set fab0 up: it writes and checks your pipelines with you, from your own words or a tested recipe, and prepares your GitHub for them.
+[fab0](https://fab0.dev) keeps the runs of your team's pipelines. A pipeline is a state machine you write in your repository, one per file, in `.fab0/pipelines/<name>.yml`. This plugin helps you set fab0 up: it writes and checks your pipelines with you, from your own words or a tested recipe, and prepares your GitHub for them.
 
 ## What it installs
 
-- **The `fab0-pipelines` skill,** which writes and changes your pipelines with you, one at a time. It checks each draft with fab0 until no error is left, puts it, tells you what each warning asks of you, and opens a pull request for `.fab0/pipelines.yml`.
+- **The `fab0-pipelines` skill,** which writes and changes your pipelines with you, one at a time. It checks each draft with fab0 until no error is left, puts it, tells you what each warning asks of you, and opens a pull request for its file. Once you merge it, the skill puts every pipelines file of your repository, including a legacy `.fab0/pipelines.yml`, and refuses a pipeline name that two files define.
 - **Three recipes,** tested pipelines to start from: `review-loop`, `fan-out` and `github-issue`.
 - **The setup script,** which makes the issue types and status labels your pipelines use in your GitHub.
 

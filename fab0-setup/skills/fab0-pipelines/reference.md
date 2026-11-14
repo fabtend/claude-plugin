@@ -6,7 +6,7 @@ Write only what this reference describes. There is no other key, no expression l
 
 ## 1. The file
 
-A pipelines file is a YAML stream, one pipeline per document, documents separated by `---`. Its first line is the modeline, so an editor checks the file against the published JSON Schema:
+A pipelines file is a YAML stream, one pipeline per document, documents separated by `---`. A repository keeps its pipelines in any number of files: by convention one pipeline per file, in `.fab0/pipelines/<name>.yml`, beside the legacy `.fab0/pipelines.yml`, which may hold several. A file's first line is the modeline, so an editor checks the file against the published JSON Schema:
 
 ```yaml
 # yaml-language-server: $schema=https://schema.fab0.dev/pipeline.v2.json
@@ -20,8 +20,8 @@ name: second-pipeline
 ```
 
 - **A pipeline's version** is the SHA-256 of its document's text. Editing one document changes only that pipeline's version. A run keeps the version it started with for its whole life; new runs take the active version.
-- **Names are unique in the tenant** (the GitHub account that installed fab0), whichever file or repository a pipeline came from.
-- **Two ways in, one store.** `put_pipeline` with the file's text, or the GitHub App's sync of `.fab0/pipelines.yml` in an installed repository's default branch (at installation, every 15 minutes, and at once with `sync_pipelines`). A valid document becomes its name's active version. An invalid one changes nothing.
+- **Names are unique in the tenant** (the GitHub account that installed fab0), whichever file or repository a pipeline came from. So a name is defined in one file only: two files that define it would put over each other.
+- **One way in: `put_pipeline`,** with a file's text, put by the agent: from the person's draft, or each file of the repository's default branch once a pull request is merged. A valid document becomes its name's active version. An invalid one changes nothing. The fab0 GitHub App still reads the legacy `.fab0/pipelines.yml` of a repository where it is installed; don't rely on it. The same text, put or read, is the same version.
 - **Nothing is deleted by omission.** A file without a pipeline's document leaves that pipeline as it was.
 
 Caps, per file:
@@ -140,6 +140,7 @@ A signal name is `^[a-z][a-z0-9_-]*(\.[a-z0-9_-]+)*$`, at most 64 characters. Th
 | --- | --- | --- |
 | engine | `done`, `failed`, `timeout`, `children.done` | fab0 |
 | adapter | the `github.` signals of section 6 | the GitHub adapter, from a webhook delivery |
+| adapter | `ext.<source>.<name>`: a tenant's source and the name its sender gives | the signed webhook adapter, from a system that holds the source's secret |
 | client | any other name you choose (`approve`, `changes`, `retry`), not starting with `github.` or `fab0.` | people and agents, with the `signal` tool |
 
 The engine's signals and their payloads:
@@ -152,8 +153,9 @@ The engine's signals and their payloads:
 | `children.done` | the visit's step is done and every child it started has ended | `{ succeeded, failed, cancelled }`, counts |
 
 - **`where`** is equality on top-level payload fields. Each value is a string, number, boolean or `null`, or a list of them, any of which may match. A field the payload lacks matches nothing. Branch on a step's result by giving its `outputs` a field to test: `- { where: { verdict: approve }, to: merge }`.
-- **`by`** names logins or `people` groups. A client signal counts only from a person in it. On an adapter signal, `by` is matched against its `sender`. `by` is not allowed on an engine signal.
+- **`by`** names logins or `people` groups. A client signal counts only from a person in it. On a `github.` signal, `by` is matched against its `sender`. An `ext.` signal has no sender, so a condition with `by` never takes it. `by` is not allowed on an engine signal.
 - **Without `by`**, a client signal is taken from any member of the tenant, and an adapter signal from any sender, bots included. `where: { sender_type: User }` keeps only people.
+- **An `ext.` signal's payload** is flat: at most 32 fields of strings (cut to 255 characters), numbers, booleans and `null`. Its sender chooses the fields, so fab0 can't check a `where` on them, and warns once per pipeline with `ext-unchecked`.
 - **A signal that holds no transition** in the current state, or matches no condition of its list, is ignored and recorded with the reason (`get_run` shows it). It never moves the run. So a late or stray signal is harmless.
 
 ## 6. GitHub signals and their fields
@@ -161,6 +163,8 @@ The engine's signals and their payloads:
 The GitHub adapter turns a webhook delivery into a signal named `github.<event>.<action>`, with a flat payload of the fields below. No field holds text a person wrote: no title, body, comment, review text or commit message. fab0 only reads GitHub; it never writes to it.
 
 These are the only `github.` signals. The adapter sends no other, so a pipeline can't wait for issue assignment or an edit of a pull request's text.
+
+GitHub sends these only for repositories where the fab0 GitHub App is installed. Without the App, a source's signed webhook is the way in: the system that holds the source's secret sends `ext.<source>.<name>` signals (section 5).
 
 | Signal | Its own fields |
 | --- | --- |
@@ -239,7 +243,8 @@ start:
 
 - **`on: api`** lets `start_run` start the pipeline, with an optional subject and input. A pipeline that people should also start by hand lists it beside its GitHub rules.
 - **`on: <github signal>`** starts a run when a delivery of that name arrives whose key no active run holds, and whose fields satisfy `where`. The run's subject is the delivery's key, its first step's input is the fields, and its entry signal is the rule's name.
-- A start rule has no `by`. Name who may trigger it with `where: { sender: [login, ...] }`.
+- **`on: ext.<source>.<name>`** starts a run the same way from a signed webhook delivery. One whose body has no key starts a run with no subject.
+- A start rule has no `by`. Name who may trigger a GitHub one with `where: { sender: [login, ...] }`.
 - A delivery starts at most one run: pipelines are tried in name order, and the first start takes the key.
 - A pipeline without `start` runs only as a child, started by a step of a state with `children`.
 
@@ -271,7 +276,7 @@ start:
 | `unknown-person` | error | a `by` entry is neither a `people` group nor a login (`^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$`) | add the group under `people`, or write the login |
 | `by-on-engine-signal` | error | `by` on `done`, `failed`, `timeout` or `children.done` | remove `by`: fab0 sends these. Branch with `where` on their payload instead |
 | `reserved-signal` | error | an `on` key starts with `fab0.` | choose another name |
-| `start-source` | error | a `start` rule's `on` is neither `api` nor a GitHub signal | use `on: api`, or a signal of section 6 |
+| `start-source` | error | a `start` rule's `on` is neither `api`, a GitHub signal nor an `ext.<source>.<name>` signal | use `on: api`, a signal of section 6, or an `ext.<source>.<name>` signal |
 | `adapter-signal` | error | a `github.` name in `start` or `on` that the adapter doesn't send | use one of the signals the fix lists |
 | `adapter-field` | error | a `where` field that the GitHub signal doesn't carry | use one of the fields the fix lists |
 | `outputs-schema` | error | `outputs` isn't a valid JSON Schema, or can't be built: two subschemas with the same `$id`, or a `$ref` that doesn't resolve inside it (no schema is fetched) | correct it; `type: object` with `properties` is enough |
@@ -279,6 +284,7 @@ start:
 | `unknown-pipeline` | warning (store) | `children.pipeline` names no pipeline in the file or the tenant | put that pipeline too; until then the step's `start_child` is refused |
 | `secret-unset` | warning (store) | an `http` or `claude-routine` executor's `secret` has no value in the tenant, or is set for another origin than the executor's `url`, which the message names. Its path is `executors.<name>.secret` | the person sets it with the secrets endpoint, from their own shell (section 3), before the put |
 | `unbounded-wait` | warning | a state with `children` and no `timeout`; or a state without `run` and without `timeout` whose every transition has `by` | none, if a person always answers or every child always ends; otherwise add a `timeout` and handle it |
+| `ext-unchecked` | warning | the pipeline names an `ext.` signal, whose fields fab0 can't check; once per pipeline | none: make sure each `where` names fields the source's sender puts in its payload |
 
 ## 10. Whole pipelines
 
