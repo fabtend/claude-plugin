@@ -1,6 +1,6 @@
 {
   "name": "fab0",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Connects Claude Code to fab0: your runs, your queue, the steps you work and the signals you send.",
   "author": { "name": "fab0" },
   "homepage": "https://fab0.dev",
