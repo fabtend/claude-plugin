@@ -4,8 +4,8 @@ description: Writes and changes fab0 pipelines, one at a time, from a person's d
 license: MIT
 compatibility: Needs the fab0 MCP server, from the fab0 plugin 3.0.0 or later, which fab0-setup installs, and a fab0 server on contract v4. Committing the file needs git and the GitHub CLI (gh) signed in as the person; setting a secret needs curl in the person's own shell.
 metadata:
-  version: "6"
-  plugin: "3.0.0"
+  version: "7"
+  plugin: "3.0.1"
 ---
 
 # Write a fab0 pipeline
@@ -26,6 +26,8 @@ fab0 holds a team's pipelines and their runs. A pipeline is a state machine writ
 ## 1. Understand
 
 Call `whoami`. Its `tenants` are the GitHub accounts, organizations or users, that the person's pipelines live in; each has an `id`, a `login` and `admin`. Use the tenant the person names when there are several. Only the tenant's admin, the owner of a user account or an `admin` of the organization, can put or retire a pipeline or set a secret: if the person isn't one, say so now, and that an admin will have to put it.
+
+Its `accounts` are the GitHub accounts the person is an admin of that hold no pipelines yet: their own user account, and each organization where their role is `admin`. Each is a place their pipelines can go, with no GitHub App to install: the first `put_pipeline` that names one as its `tenant`, by its `login` or `id`, and stores a pipeline, makes it a tenant (4). When the person's pipelines belong in one of them, such as the repository's owner, use it as the tenant: name it as `tenant` in every call, also when the person has a single tenant elsewhere. Never tell the person to install the App to make an account a tenant: the App only brings GitHub's events (`github-without-app`, 5). An organization that restricts OAuth Apps is in neither list until one of its owners approves fab0.
 
 Start from one of:
 
@@ -66,7 +68,7 @@ Write one document, from the start you chose and reference.md:
 
 If an error is still there after you applied its fix twice, stop, and show it to the person with what you tried. Show the person any errors in documents you didn't change, and leave them: they are another change.
 
-**Before the put**, give the person the secrets command for each `secret-unset` warning, so the secret is set when the pipeline goes live, not after. Give them this command to run in their own shell:
+**Before the put**, give the person the secrets command for each `secret-unset` warning, so the secret is set when the pipeline goes live, not after. For an account that is no tenant yet (1), the secrets route answers `forbidden` until the first put makes it one: give the command right after that put instead, and tell the person that a step that runs before it is set fails. Give them this command to run in their own shell:
 
 ```bash
 pbpaste | curl -fsS -X PUT "https://<host>/api/v1/secrets/<NAME>?tenant=<tenant id>&origin=<origin>" \
@@ -79,7 +81,7 @@ Fill in `<NAME>`, `<origin>`, `<tenant id>` and `<host>`: `<NAME>` is the execut
 
 Show the person the document, and say in a few lines what it does: what starts a run, what each step does and who or what works it, who decides each decision and where it leads, and what ends a run. Change it until they agree, validating again after each change (3).
 
-Call `put_pipeline` with `text`, the whole file, and `tenant` when the person has several. Each valid document becomes its pipeline's active version; the answer gives each document's `status` and `version`. On `forbidden`, the person isn't the tenant's admin: tell them the tenant's admin puts it, the owner of a user account or an `admin` of the organization, or puts it once the pull request is merged (6).
+Call `put_pipeline` with `text`, the whole file, and `tenant` when the person has several, or when it is an account (1). Each valid document becomes its pipeline's active version; the answer gives each document's `status` and `version`. A put to an account that stores a pipeline makes it a tenant, without the App: `whoami` lists it with the tenants from then on. On `forbidden`, the person isn't the tenant's admin: tell them the tenant's admin puts it, the owner of a user account or an `admin` of the organization, or puts it once the pull request is merged (6).
 
 When the person keeps the file in a repository and wants its review there before it runs, don't put it: go to 6, where you put the repository's files once the pull request is merged.
 
