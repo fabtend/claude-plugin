@@ -1,16 +1,15 @@
 #!/usr/bin/env node
-// plugins/fab0-setup/scripts/fab0-setup.mjs: prepares GitHub for a fab0 pipeline (ARCHITECTURE O.1, spec R6.17,
-// stage 12 spec R12.14): the issue types its items take, in an organization, and in each repository the status
-// labels its steps move them through. Either kind may be "" for none, but not both; a user account, which has no
-// issue types (K.1), gets labels only. It makes no label of fab0's own: pause and cancel are tools, not labels
-// (ADR 0027).
-// It reads what exists first, makes only what is missing, and changes nothing that exists, so a second run writes
-// nothing. It prints its plan, and writes only with --apply.
+// plugins/fab0-setup/scripts/fab0-setup.mjs: prepares GitHub for a fab0 pipeline (ARCHITECTURE O.1; agent interface
+// section 10.5): the issue types its items take, in an organization, and in each repository the status labels its steps
+// move them through. Either kind may be "" for none, but not both; a user account, which has no issue types (K.1), gets
+// labels only. It makes no label of fab0's own: pause and cancel are tools, not labels (ADR 0027). It reads what exists
+// first, makes only what is missing, and changes nothing that exists, so a second run writes nothing. It prints its
+// plan, and writes only with --apply.
 //
-// It runs as a person who may make issue types and labels (an organization owner, or for labels alone a person
-// who may write to the repository), never as the fab0 App, which only reads (B.14). The token comes from GH_TOKEN
-// or `gh auth token` and is never printed (M.2). It needs Node alone: no package to install. Released with the
-// fab0-setup plugin, and to fabtend/home's setup/ (stage 12 spec R12.17).
+// It runs as a person who may make issue types and labels (an organization owner, or for labels alone a person who may
+// write to the repository), never as the fab0 App, which only reads (B.14). The token comes from GH_TOKEN or `gh auth
+// token` and is never printed (M.2). It needs Node alone: no package to install. Released with the fab0-setup plugin,
+// and to fabtend/home's setup/ (development section 2).
 
 import { execFileSync } from "node:child_process";
 import { parseArgs } from "node:util";
