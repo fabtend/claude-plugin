@@ -4,11 +4,11 @@
 
 ## What it installs
 
-- **The `fab0-pipelines` skill,** which writes and changes your pipelines with you, one at a time. It checks each draft with fab0 until no error is left, puts it, tells you what each warning asks of you, and opens a pull request for its file. Once you merge it, the skill puts every pipelines file of your repository, including a legacy `.fab0/pipelines.yml`, and refuses a pipeline name that two files define.
+- **The `fab0-pipelines` skill,** which writes and changes your pipelines with you, one at a time. It checks each draft with fab0 until no error is left, puts it, tells you what each warning asks of you, and opens a pull request for its file. Once you merge it, the skill puts every pipelines file of your repository, including a legacy `.fab0/pipelines.yml`, and refuses a pipeline name that two files define. fab0 reads no file of your repository itself, so a pipeline you take out of a file stays live until it is retired: the skill names each one the merge took out, and each live pipeline no file holds, and retires those you say yes to (`remove_pipeline`).
 - **Three recipes,** tested pipelines to start from: `review-loop`, `fan-out` and `github-issue`.
 - **The setup script,** which makes the issue types and status labels your pipelines use in your GitHub.
 
-It needs the `fab0` plugin, which connects Claude Code to fab0, and installs it with it. The skill calls the `fab0` plugin's tools, so you sign in once, there.
+It needs the `fab0` plugin, which connects Claude Code to fab0, and installs it with it. The skill calls the `fab0` plugin's tools, so you sign in once, there. This version, 3.0.0, needs the `fab0` plugin 3.0.0 or later and a fab0 server on contract v4, as `mcp.fab0.dev` is. Putting or retiring a pipeline, or setting a secret, needs the account's admin: the owner of a user account, or an `admin` of the organization.
 
 ## Install
 
@@ -21,7 +21,7 @@ In Claude Code:
 
 Then run `/mcp`, choose the fab0 plugin's server, and sign in with GitHub.
 
-Until fab0 `v0.3.0`, the `fab0` plugin also carries a `fab0-pipelines` skill of its own. To use this plugin's, ask for `fab0-setup:fab0-pipelines` by name.
+If another plugin carries a `fab0-pipelines` skill too, ask for this plugin's by name: `fab0-setup:fab0-pipelines`.
 
 ## Write a pipeline
 

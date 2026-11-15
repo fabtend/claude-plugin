@@ -20,9 +20,9 @@ name: second-pipeline
 ```
 
 - **A pipeline's version** is the SHA-256 of its document's text. Editing one document changes only that pipeline's version. A run keeps the version it started with for its whole life; new runs take the active version.
-- **Names are unique in the tenant** (the GitHub account that installed fab0), whichever file or repository a pipeline came from. So a name is defined in one file only: two files that define it would put over each other.
-- **One way in: `put_pipeline`,** with a file's text, put by the agent: from the person's draft, or each file of the repository's default branch once a pull request is merged. A valid document becomes its name's active version. An invalid one changes nothing. The fab0 GitHub App still reads the legacy `.fab0/pipelines.yml` of a repository where it is installed; don't rely on it. The same text, put or read, is the same version.
-- **Nothing is deleted by omission.** A file without a pipeline's document leaves that pipeline as it was.
+- **Names are unique in the tenant** (the GitHub account, organization or user, the pipelines live in), whichever file or repository a pipeline came from. So a name is defined in one file only: two files that define it would put over each other.
+- **One way in: `put_pipeline`,** with a file's text, put by the agent: from the person's draft, or each file of the repository's default branch once a pull request is merged. A valid document becomes its name's active version. An invalid one changes nothing. fab0 reads no file of a repository, the legacy `.fab0/pipelines.yml` included: a change to a file reaches fab0 only when it is put. The same text put again is the same version. The fab0 GitHub App is what sends the `github.*` signals (section 6), not the files; without it, a source's signed webhook sends `ext.*` signals instead (section 5).
+- **Nothing is deleted by omission.** A file without a pipeline's document leaves that pipeline as it was, active, until `remove_pipeline { tenant?, name }` retires it, which needs the tenant's admin. It answers `retired`, the version that was active, or null when none was. Runs already started finish on their version, no new run starts from it, and a later put of the name makes it active again. The listed resource `fab0://pipelines/<tenant login>/<name>` names each active pipeline, with its version and source.
 
 Caps, per file:
 
@@ -258,7 +258,7 @@ start:
 
 ## 9. Validation codes
 
-`validate_pipeline` with `text` answers the file's `problems` (a YAML error or a file cap, which stop every document) and, for each document, its `errors`, which make that pipeline invalid, and its `warnings`, which don't. Each problem has a `code`, its document and pipeline `name`, a `path` to the offending key, a `line`, a `message` and a `fix`. Apply the fix at the path. `put_pipeline`, the file sync and `validate_pipeline` with `tenant` and `text` (an admin only; it stores nothing) add the `store` warnings, which check a document against what the tenant holds; their `line` is the document's first line, so read their `path`.
+`validate_pipeline` with `text` answers the file's `problems` (a YAML error or a file cap, which stop every document) and, for each document, its `errors`, which make that pipeline invalid, and its `warnings`, which don't. Each problem has a `code`, its document and pipeline `name`, a `path` to the offending key, a `line`, a `message` and a `fix`. Apply the fix at the path. `put_pipeline` and `validate_pipeline` with `tenant` and `text` (an admin only; it stores nothing) add the `store` warnings, which check a document against what the tenant holds; their `line` is the document's first line, so read their `path`.
 
 | Code | Kind | What it means | Fix |
 | --- | --- | --- | --- |
@@ -285,6 +285,7 @@ start:
 | `secret-unset` | warning (store) | an `http` or `claude-routine` executor's `secret` has no value in the tenant, or is set for another origin than the executor's `url`, which the message names. Its path is `executors.<name>.secret` | the person sets it with the secrets endpoint, from their own shell (section 3), before the put |
 | `unbounded-wait` | warning | a state with `children` and no `timeout`; or a state without `run` and without `timeout` whose every transition has `by` | none, if a person always answers or every child always ends; otherwise add a `timeout` and handle it |
 | `ext-unchecked` | warning | the pipeline names an `ext.` signal, whose fields fab0 can't check; once per pipeline | none: make sure each `where` names fields the source's sender puts in its payload |
+| `github-without-app` | warning (store) | the pipeline names a `github.` signal in `start` or `on`, and the fab0 GitHub App isn't installed on the tenant, so GitHub sends it none; once per pipeline, never for an `ext.` signal; since contract v4 | install the fab0 GitHub App on the account, or have the event sent through the signed webhook as an `ext.<source>.<name>` signal |
 
 ## 10. Whole pipelines
 
