@@ -1,5 +1,5 @@
 {
   "mcpServers": {
-    "fab0": { "type": "http", "url": "${FAB0_MCP_URL:-https://mcp.fab0.dev/mcp}" }
+    "fab0": { "type": "http", "url": "https://mcp.fab0.dev/mcp" }
   }
 }

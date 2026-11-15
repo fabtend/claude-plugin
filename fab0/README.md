@@ -15,7 +15,9 @@ In Claude Code:
 
 ## Sign in
 
-The first fab0 tool call asks you to sign in. Run `/mcp`, choose the fab0 plugin's server, and sign in with GitHub in the browser. fab0 sees the accounts you belong to where the fab0 GitHub App is installed, and nothing else.
+The first fab0 tool call asks you to sign in. Run `/mcp`, choose the fab0 plugin's server, and sign in with GitHub in the browser. GitHub asks you to authorize fab0 with `read:org`: fab0 reads your own account and the organizations you are an active member of, with your role in each, to find your tenants and whether you are their admin, and nothing else. An organization that restricts OAuth Apps shows up only once one of its owners approves fab0 in its settings (Third-party access); until then, ask an owner, and `whoami` reminds you.
+
+If you signed in before fab0 moved to this sign-in, your sign-in ends at its next refresh, within the hour: run `/mcp` and sign in again.
 
 ## Your queue
 
@@ -79,11 +81,13 @@ Then restart Claude Code: a session started before the update keeps the old tool
 
 ## For testers: the dev server
 
-To point the plugin at fab0's `dev` environment, start Claude Code with:
+The plugin's server is always fab0's `prod`. To reach fab0's `dev` environment as well, add its server beside the plugin's, once, under its own name:
 
 ```
-FAB0_MCP_URL=https://dev.fab0.dev/mcp claude
+claude mcp add --transport http --scope user fab0-dev https://dev.fab0.dev/mcp
 ```
+
+Then run `/mcp`, choose `fab0-dev`, and sign in. Each server keeps its own sign-in, so every session has both and nothing is switched: ask for `fab0-dev` by name when you mean `dev`. A routine on `dev` uses a connector named `fab0-dev`, at `https://dev.fab0.dev/work`, and its routine's prompt names `fab0-dev` where the line in [Run steps in a routine](#run-steps-in-a-routine) names `fab0`.
 
 ## License
 
