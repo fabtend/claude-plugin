@@ -1,6 +1,6 @@
 {
   "name": "fab0-setup",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Helps you set up fab0: writes and checks your pipelines, from your words or a tested recipe, and prepares your GitHub for them.",
   "author": { "name": "fab0" },
   "homepage": "https://fab0.dev",
