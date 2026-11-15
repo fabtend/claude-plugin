@@ -1,6 +1,6 @@
 # fab0 for Claude Code
 
-[fab0](https://fab0.dev) keeps the runs of your team's pipelines. A pipeline is a state machine you write in your repository's `.fab0/pipelines.yml`. fab0 holds each run's state, hands each step to the person, routine or endpoint the pipeline names, and moves the run on the signals it waits for: a person's decision, or an event of your GitHub issues and pull requests. This plugin connects Claude Code to fab0, so you can see your runs and your queue, work the steps that wait on you, and send signals.
+[fab0](https://fab0.dev) keeps the runs of your team's pipelines. A pipeline is a state machine you write in a file of your repository, by convention `.fab0/pipelines/<name>.yml`, and put to fab0. fab0 holds each run's state, hands each step to the person, routine or endpoint the pipeline names, and moves the run on the signals it waits for: a person's decision, or an event of your GitHub issues and pull requests. This plugin connects Claude Code to fab0, so you can see your runs and your queue, work the steps that wait on you, and send signals.
 
 It installs one thing: **the fab0 MCP server**, at `https://mcp.fab0.dev/mcp`. Its tools read runs and your queue, claim and work steps, send signals, start and cancel runs, and validate, put and sync pipelines. Its prompt `/mcp__plugin_fab0_fab0__continue` takes you through your queue. The server tells Claude how to work a step, so the plugin carries nothing else, and an update of fab0 needs no update of the plugin to change how a step is worked.
 
@@ -58,7 +58,7 @@ Help with writing pipelines is a plugin of its own, `fab0-setup`, from the same 
 /plugin install fab0-setup@fab0
 ```
 
-It installs this plugin with it if you don't have it. Then describe how work should flow: "write a fab0 pipeline where a routine plans each Feature and a person approves the plan", or start from one of its recipes: "set up the github-issue recipe". It checks each pipeline with fab0 until no error is left, and opens a pull request for `.fab0/pipelines.yml`.
+It installs this plugin with it if you don't have it. Then describe how work should flow: "write a fab0 pipeline where a routine plans each Feature and a person approves the plan", or start from one of its recipes: "set up the github-issue recipe". It checks each pipeline with fab0 until no error is left, opens a pull request for its file, and once you merge it, puts every pipelines file of your repository. fab0 reads no file of your repository itself: a pipeline you take out of a file stays live until you remove it (`remove_pipeline`).
 
 ## Secrets
 
@@ -77,7 +77,7 @@ pbpaste | curl -fsS -X PUT "https://mcp.fab0.dev/api/v1/secrets/PLANNER_TOKEN?te
 /plugin update fab0@fab0
 ```
 
-Then restart Claude Code: a session started before the update keeps the old tools.
+Then restart Claude Code: a session started before the update keeps the old tools. When `whoami` says the plugin is older than the server's minimum, as it does for `2.x` since fab0's contract v4, update it before anything else.
 
 ## For testers: the dev server
 
