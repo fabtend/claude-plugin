@@ -62,7 +62,7 @@ It installs this plugin with it if you don't have it. Then describe how work sho
 
 ## Secrets
 
-An executor's secret is the bearer fab0 sends with each call to the executor. You set it by name, for the one origin it may be sent to, with your own GitHub token; you must be an admin of the account, and the token must itself reach a repository you administer there: `gh auth token`'s does, and so does a classic token with `repo`. The account's id is `whoami`'s `tenants[].id`. From a shell, with the value on the clipboard:
+An executor's secret is the bearer fab0 sends with each call to the executor. You set it by name, for the one origin it may be sent to, with your own GitHub token; you must be the account's admin, and the token must itself show it: for a user account, GitHub's `/user` answers that account for it; for an organization, the token reads your membership there with the role `admin` (`/user/memberships/orgs`). `gh auth token`'s does, and so does a classic token with `read:org` or `repo`. The account's id is `whoami`'s `tenants[].id`. From a shell, with the value on the clipboard:
 
 ```bash
 pbpaste | curl -fsS -X PUT "https://mcp.fab0.dev/api/v1/secrets/PLANNER_TOKEN?tenant=<account id>&origin=https://api.anthropic.com" \
