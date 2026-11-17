@@ -1,7 +1,7 @@
 {
   "name": "fab0-setup",
-  "version": "3.0.1",
-  "description": "Helps you set up fab0: writes and checks your pipelines, from your words or a tested recipe, and prepares your GitHub for them.",
+  "version": "4.0.0",
+  "description": "Keeps your fab0 pipelines in your repository: commits each through a pull request, puts every file after a merge, and prepares your GitHub for them.",
   "author": { "name": "fab0" },
   "homepage": "https://fab0.dev",
   "repository": "https://github.com/fabtend/claude-plugin",

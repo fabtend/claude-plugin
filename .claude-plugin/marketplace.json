@@ -8,7 +8,7 @@
     {
       "name": "fab0-setup",
       "source": "./fab0-setup",
-      "description": "Helps you set up fab0: writes and checks your pipelines, from your words or a tested recipe, and prepares your GitHub for them."
+      "description": "Keeps your fab0 pipelines in your repository: commits each through a pull request, puts every file after a merge, and prepares your GitHub for them."
     },
     {
       "name": "fab0",
